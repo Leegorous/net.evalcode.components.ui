@@ -1,0 +1,25 @@
+{
+  "product": "net.evalcode.components",
+  "package": "ui",
+  "description": "User Interface",
+  "version": "0.1",
+  "vendor": "evalcode.net",
+
+  "layout":
+  {
+    "namespace": "Components",
+    "sources": "source",
+    "tests": "test"
+  },
+
+  "requires":
+  {
+    "type": "latest"
+  },
+
+  "repository":
+  {
+    "remote-location": "http://www.evalcode.net/components/",
+    "remote-layout": "${product}.${package}-${version}"
+  }
+}
