@@ -1,4 +1,3 @@
-
 <?php
 /**
  * Copyright (C) 2012 evalcode.net
@@ -25,7 +24,7 @@ namespace Components;
    * Panel_Combobox
    *
    * @package net.evalcode.components
-   * @subpackage io
+   * @subpackage ui.panel
    *
    * @since 1.0
    * @access public
@@ -34,7 +33,7 @@ namespace Components;
    * @copyright Copyright (C) 2012 evalcode.net
    * @license GNU General Public License 3
    */
-  class Panel_Combobox extends Panel
+  class Panel_Combobox extends Panel implements Panel_Submittable
   {
     // CONSTRUCTION
     public function __construct($name_, array $options_, $value_=null, $title_=null)
@@ -50,6 +49,70 @@ namespace Components;
     public function getOptions()
     {
       return $this->m_options;
+    }
+
+    public function setOptions(array $options_)
+    {
+      $this->m_options=$options_;
+    }
+    //--------------------------------------------------------------------------
+
+
+    // OVERRIDES/IMPLEMENTS
+    public function hasCallback()
+    {
+      return $this->m_callback instanceof \Closure;
+    }
+
+    public function getCallback()
+    {
+      return $this->m_callback;
+    }
+
+    public function setCallback(\Closure $callback_)
+    {
+      $this->m_callback=$callback_;
+    }
+
+    public function hasBeenSubmitted()
+    {
+      return isset($_REQUEST[$this->getId()]);
+    }
+
+    public function display()
+    {
+      if($this->hasCallback())
+        $this->attributes->onchange='components_ui_panel_submittable_form_submit(this); return false;';
+
+      parent::display();
+    }
+    //--------------------------------------------------------------------------
+
+
+    // IMPLEMENTATION
+    private $m_callback;
+    //-----
+
+
+    protected function init()
+    {
+      parent::init();
+
+      $this->setTemplate(__DIR__.'/combobox.tpl');
+
+      $this->attributes->name=$this->getId();
+    }
+
+    protected function onRetrieveValue()
+    {
+      if(isset($_REQUEST[$this->getID()]))
+        $this->m_value=(int)$_REQUEST[$this->getID()];
+
+      if($this->m_callback instanceof \Closure)
+      {
+        $callback=$this->m_callback;
+        $callback($this);
+      }
     }
     //--------------------------------------------------------------------------
   }

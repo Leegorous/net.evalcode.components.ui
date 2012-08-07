@@ -28,7 +28,7 @@ namespace Components;
    * </p>
    *
    * @package net.evalcode.components
-   * @subpackage io
+   * @subpackage ui
    *
    * @since 1.0
    * @access public
@@ -40,7 +40,6 @@ namespace Components;
   class Panel implements Object
   {
     // PROPERTIES
-
     /**
      * @var \Components\HashMap<string, mixed>
      */
@@ -56,7 +55,8 @@ namespace Components;
     // CONSTRUCTION
     public function __construct($name_, $value_=null, $title_=null)
     {
-      $this->m_name=$name_;
+      $this->m_name=$this->m_id=$name_;
+
       $this->m_value=$value_;
       $this->m_title=$title_;
 
@@ -71,18 +71,11 @@ namespace Components;
 
 
     // ACCESSORS/MUTATORS
-    public function init()
-    {
-      // Do nothing ...
-    }
-
-
     public function add(Panel $panel_)
     {
       $this->m_children->put($panel_->m_name, $panel_);
 
-      $panel_->m_parent=$this;
-      $panel_->initialize(true);
+      $panel_->setParent($this);
     }
 
     public function remove(Panel $panel_)
@@ -90,10 +83,30 @@ namespace Components;
       $this->m_children->remove($panel_->m_name);
     }
 
+    public function getParent()
+    {
+      return $this->m_parent;
+    }
+
+    public function setParent(Panel $parent_)
+    {
+      $this->m_parent=$parent_;
+
+      foreach($this->m_children->values() as $panel)
+        $panel->setParent($this);
+
+      $this->initialize(true);
+    }
+
+    public function getPath()
+    {
+      return $this->m_path;
+    }
+
 
     public function getId()
     {
-      return implode('-', $this->getPath());
+      return $this->m_id;
     }
 
     public function getName()
@@ -122,21 +135,6 @@ namespace Components;
     }
 
 
-    public function getPath()
-    {
-      $path=array();
-      $panel=$this;
-
-      do
-      {
-        array_unshift($path, $panel->m_name);
-      }
-      while($panel=$panel->m_parent);
-
-      return $path;
-    }
-
-
     public function getTemplate()
     {
       return $this->m_template;
@@ -147,7 +145,35 @@ namespace Components;
       $this->m_template=$template_;
     }
 
-    public function getAttributeString()
+    public function isForm()
+    {
+      foreach($this->m_children->values() as $panel)
+      {
+        if($panel instanceof Panel_Submittable && $panel->hasCallback())
+          return true;
+      }
+
+      return false;
+    }
+
+    public function isActiveForm()
+    {
+      if($this->isForm())
+      {
+        $panel=$this;
+        while($panel=$panel->m_parent)
+        {
+          if($panel->isForm())
+            return false;
+        }
+
+        return true;
+      }
+
+      return false;
+    }
+
+    public function getAttributesAsString()
     {
       $attributes=array();
       foreach($this->attributes->arrayValue() as $key=>$value)
@@ -156,15 +182,27 @@ namespace Components;
       return implode(' ', $attributes);
     }
 
+
     public function display()
     {
       if(null===$this->m_parent)
         $this->initialize();
 
       $engine=new Text_Template_Engine();
+      $engine->isActiveForm=$this->isActiveForm();
       $engine->panels=$this->m_children;
       $engine->params=$this->params;
       $engine->self=$this;
+
+      $engine->printElementAttributes=function()
+      {
+        echo 'id="';
+        echo $this->m_id;
+        echo '"';
+        if($attributeString=$this->getAttributesAsString())
+          echo ' ';
+        echo $attributeString;
+      };
 
       $engine->display($this->m_template);
     }
@@ -175,58 +213,6 @@ namespace Components;
       $this->display();
 
       return ob_get_clean();
-    }
-
-
-    public function isSubmittable()
-    {
-      foreach($this->m_children->values() as $panel)
-      {
-        if($panel->hasCallback())
-          return true;
-      }
-
-      return false;
-    }
-
-    public function hasBeenSubmitted()
-    {
-      return isset($_REQUEST[$this->getId()]);
-    }
-
-    public function hasCallback()
-    {
-      return is_callable($this->m_callback);
-    }
-
-    public function getCallback()
-    {
-      return $this->m_callback;
-    }
-
-    public function setCallback(callable $callback_)
-    {
-      $this->m_callback=$callback_;
-    }
-
-    public function addValidator(/*Validator*/ $validator_)
-    {
-      $this->m_validators[$validator_->hashCode()]=$validator_;
-    }
-
-    public function removeValidator(/*Validator*/ $validator_)
-    {
-      unset($this->m_validators[$validator_->hashCode()]);
-    }
-
-    public function hasErrors()
-    {
-      return 0<count($this->m_errors);
-    }
-
-    public function getErrors()
-    {
-      return $this->m_errors;
     }
     //--------------------------------------------------------------------------
 
@@ -269,17 +255,27 @@ namespace Components;
 
 
     // IMPLEMENTATION
+    /**
+     * @var string
+     */
     protected $m_name;
+    /**
+     * @var string
+     */
     protected $m_title;
+    /**
+     * @var mixed
+     */
     protected $m_value;
 
-    private $m_initialized=false;
-    private $m_validators=array();
-    private $m_errors=array();
     /**
-     * @var callable
+     * @var array|string
      */
-    private $m_callback;
+    private $m_path=array();
+    /**
+     * @var string
+     */
+    private $m_id;
     /**
      * @var \Components\HashMap<string, \Components\Panel>
      */
@@ -291,33 +287,41 @@ namespace Components;
     //-----
 
 
-    protected function validate()
+    protected function init()
     {
-
+      // Override ...
     }
 
     protected function afterInit()
     {
-      if($this->hasBeenSubmitted())
-      {
-        $this->validate();
-
-        if($this->hasCallback())
-          call_user_func_array($this->getCallback(), array($this));
-      }
+      // Override ...
     }
 
-
-    private function initialize($force_=false)
+    protected function onRetrieveValue()
     {
-      if(false===$this->m_initialized || $force_)
+      if(isset($_REQUEST[$this->getID()]))
+        $this->m_value=$_REQUEST[$this->getID()];
+    }
+
+    private function initialize()
+    {
+      $path=array();
+      $panel=$this;
+
+      do
       {
-        $this->init();
-
-        $this->m_initialized=true;
-
-        $this->afterInit();
+        array_unshift($path, $panel->m_name);
       }
+      while($panel=$panel->m_parent);
+
+      $this->m_path=$path;
+      $this->m_id=implode('-', $path);
+
+      $this->init();
+
+      $this->onRetrieveValue();
+
+      $this->afterInit();
     }
     //--------------------------------------------------------------------------
   }
