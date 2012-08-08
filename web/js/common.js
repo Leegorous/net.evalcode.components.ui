@@ -6,7 +6,7 @@
 
     while(node=node.parentNode)
     {
-      if("FORM"==node.tagName)
+      if(-1<node.tagName.toUpperCase().indexOf("FORM"))
         node.submit();
     }
   }

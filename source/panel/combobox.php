@@ -36,11 +36,12 @@ namespace Components;
   class Panel_Combobox extends Panel implements Panel_Submittable
   {
     // CONSTRUCTION
-    public function __construct($name_, array $options_, $value_=null, $title_=null)
+    public function __construct($name_, array $options_, $value_=null, $title_=null, $noValueOption_=null)
     {
       parent::__construct($name_, $value_, $title_);
 
       $this->m_options=$options_;
+      $this->m_noValueOption=$noValueOption_;
     }
     //--------------------------------------------------------------------------
 
@@ -54,6 +55,16 @@ namespace Components;
     public function setOptions(array $options_)
     {
       $this->m_options=$options_;
+    }
+
+    public function getNoValueOption()
+    {
+      return $this->m_noValueOption;
+    }
+
+    public function setNoValueOption(array $noValueOption_)
+    {
+      $this->m_noValueOption=$noValueOption_;
     }
     //--------------------------------------------------------------------------
 
@@ -91,6 +102,7 @@ namespace Components;
 
     // IMPLEMENTATION
     private $m_callback;
+    private $m_noValueOption;
     //-----
 
 
