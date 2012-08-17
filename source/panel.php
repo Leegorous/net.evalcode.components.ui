@@ -324,8 +324,8 @@ namespace Components;
 
     protected function onRetrieveValue()
     {
-      if(isset($_REQUEST[$this->getId()]))
-        $this->m_value=$_REQUEST[$this->getId()];
+      if(isset($_REQUEST[$this->getId()]) && 'null'!==($value=$_REQUEST[$this->getId()]))
+        $this->m_value=$value;
     }
 
 
