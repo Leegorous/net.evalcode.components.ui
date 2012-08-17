@@ -149,7 +149,7 @@ namespace Components;
     {
       foreach($this->m_children->values() as $panel)
       {
-        if($panel instanceof Panel_Submittable && $panel->hasCallback())
+        if($panel->hasCallback())
           return true;
       }
 
@@ -172,6 +172,27 @@ namespace Components;
 
       return false;
     }
+
+    public function hasCallback()
+    {
+      return $this->m_callback instanceof \Closure;
+    }
+
+    public function getCallback()
+    {
+      return $this->m_callback;
+    }
+
+    public function setCallback(\Closure $callback_)
+    {
+      $this->m_callback=$callback_;
+    }
+
+    public function hasBeenSubmitted()
+    {
+      return isset($_REQUEST[$this->getId()]);
+    }
+
 
     public function getAttributesAsString()
     {
@@ -284,7 +305,11 @@ namespace Components;
      * @var \Components\Panel
      */
     private $m_parent;
-    //-----
+    /**
+     * @var \Callable
+     */
+    private $m_callback;
+     //-----
 
 
     protected function init()
@@ -299,9 +324,10 @@ namespace Components;
 
     protected function onRetrieveValue()
     {
-      if(isset($_REQUEST[$this->getID()]))
-        $this->m_value=$_REQUEST[$this->getID()];
+      if(isset($_REQUEST[$this->getId()]))
+        $this->m_value=$_REQUEST[$this->getId()];
     }
+
 
     private function initialize()
     {
@@ -322,6 +348,12 @@ namespace Components;
       $this->onRetrieveValue();
 
       $this->afterInit();
+
+      if($this->hasCallback() && $this->hasBeenSubmitted())
+      {
+        $callback=$this->m_callback;
+        $callback($this);
+      }
     }
     //--------------------------------------------------------------------------
   }

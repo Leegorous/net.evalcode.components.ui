@@ -21,7 +21,7 @@ namespace Components;
 
 
   /**
-   * Panel_Combobox
+   * Panel_Bound_Combobox
    *
    * @package net.evalcode.components
    * @subpackage ui.panel
@@ -33,56 +33,62 @@ namespace Components;
    * @copyright Copyright (C) 2012 evalcode.net
    * @license GNU General Public License 3
    */
-  class Panel_Combobox extends Panel
+  class Panel_Bound_Combobox extends Panel_Combobox implements Panel_Bound
   {
     // CONSTRUCTION
-    public function __construct($name_, $value_=null, $title_=null, array $options_=array(), $noValueOptionName_=null)
+    public function __construct($name_, View $view_, $propertyValue_,
+      $value_=null, $title_=null, $propertyKey_=null, $noValueOptionName_=null)
     {
-      parent::__construct($name_, $value_, $title_);
+      parent::__construct($name_, $value_, $title_, array(), $noValueOptionName_);
 
-      $this->m_options=$options_;
-      $this->m_noValueOptionName=$noValueOptionName_;
-    }
-    //--------------------------------------------------------------------------
+      if(null===$propertyKey_)
+        $propertyKey_=$view_->container()->primaryKey;
 
-
-    // ACCESSORS/MUTATORS
-    public function getOptions()
-    {
-      return $this->m_options;
-    }
-
-    public function setOptions(array $options_)
-    {
-      $this->m_options=$options_;
-    }
-
-    public function getNoValueOptionName()
-    {
-      return $this->m_noValueOptionName;
-    }
-
-    public function setNoValueOptionName($noValueOptionName_)
-    {
-      $this->m_noValueOptionName=$noValueOptionName_;
+      $this->m_view=$view_;
+      $this->m_propertyValue=$propertyValue_;
+      $this->m_propertyKey=$propertyKey_;
     }
     //--------------------------------------------------------------------------
 
 
     // OVERRIDES/IMPLEMENTS
-    public function display()
+    /**
+     * @see Components.Panel_Bound::getBoundView()
+     */
+    public function getBoundView()
     {
-      if($this->hasCallback())
-        $this->attributes->onchange='components_ui_panel_submittable_form_submit(this); return false;';
+      return $this->m_view;
+    }
 
-      parent::display();
+    /**
+     * @see Components.Panel_Bound::getBoundValue()
+     */
+    public function getBoundValue()
+    {
+      if(null===$this->m_value)
+        return null;
+
+      // TODO Cache local
+      return $this->m_view->findFirst(array('select'=>array(
+        $this->m_propertyKey.' = ?', $this->m_value
+      )));
     }
     //--------------------------------------------------------------------------
 
 
     // IMPLEMENTATION
-    protected $m_options=array();
-    protected $m_noValueOptionName;
+    /**
+     * @var \Components\View
+     */
+    protected $m_view;
+    /**
+     * @var string
+     */
+    protected $m_propertyKey;
+    /**
+     * @var string
+     */
+    protected $m_propertyValue;
     //-----
 
 
@@ -90,9 +96,8 @@ namespace Components;
     {
       parent::init();
 
-      $this->setTemplate(__DIR__.'/combobox.tpl');
-
-      $this->attributes->name=$this->getId();
+      foreach($this->m_view->find() as $record)
+        $this->m_options[$record->{$this->m_propertyKey}]=$record->{$this->m_propertyValue};
     }
     //--------------------------------------------------------------------------
   }
