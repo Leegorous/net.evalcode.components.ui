@@ -83,6 +83,11 @@ namespace Components;
       $this->m_children->remove($panel_->m_name);
     }
 
+    public function hasParent()
+    {
+      return null!==$this->m_parent;
+    }
+
     public function getParent()
     {
       return $this->m_parent;
@@ -173,6 +178,17 @@ namespace Components;
       return false;
     }
 
+    public function isSubmittable()
+    {
+      foreach($this->m_children->values() as $panel)
+      {
+        if($panel instanceof Panel_Button_Submit || $panel->isSubmittable())
+          return true;
+      }
+
+      return false;
+    }
+
     public function hasCallback()
     {
       return $this->m_callback instanceof \Closure;
@@ -209,8 +225,15 @@ namespace Components;
       if(null===$this->m_parent)
         $this->initialize();
 
+      if(!$this->attributes->class)
+        $this->attributes->class=strtr(strtolower(get_class($this)), '\\', '_');
+      else
+        $this->attributes->class.=' '.strtr(strtolower(get_class($this)), '\\', '_');
+
+      if(null===$this->m_parent && false===strpos($this->attributes->class, 'components_panel_noscript'))
+        $this->attributes->class.=' components_panel_noscript';
+
       $engine=new Text_Template_Engine();
-      $engine->isActiveForm=$this->isActiveForm();
       $engine->panels=$this->m_children;
       $engine->params=$this->params;
       $engine->self=$this;
@@ -234,6 +257,11 @@ namespace Components;
       $this->display();
 
       return ob_get_clean();
+    }
+
+    public function redirect($uri_)
+    {
+      header("Location: $uri_", true, 302);
     }
     //--------------------------------------------------------------------------
 

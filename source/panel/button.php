@@ -21,7 +21,7 @@ namespace Components;
 
 
   /**
-   * Panel_Combobox
+   * Panel_Button
    *
    * @package net.evalcode.components
    * @subpackage ui.panel
@@ -33,67 +33,70 @@ namespace Components;
    * @copyright Copyright (C) 2012 evalcode.net
    * @license GNU General Public License 3
    */
-  class Panel_Combobox extends Panel
+  class Panel_Button extends Panel
   {
-    // CONSTRUCTION
-    public function __construct($name_, $value_=null, $title_=null, array $options_=array(), $noValueOptionName_=null)
-    {
-      parent::__construct($name_, $value_, $title_);
-
-      $this->m_options=$options_;
-      $this->m_noValueOptionName=$noValueOptionName_;
-    }
-    //--------------------------------------------------------------------------
-
-
-    // ACCESSORS/MUTATORS
-    public function getOptions()
-    {
-      return $this->m_options;
-    }
-
-    public function setOptions(array $options_)
-    {
-      $this->m_options=$options_;
-    }
-
-    public function getNoValueOptionName()
-    {
-      return $this->m_noValueOptionName;
-    }
-
-    public function setNoValueOptionName($noValueOptionName_)
-    {
-      $this->m_noValueOptionName=$noValueOptionName_;
-    }
-    //--------------------------------------------------------------------------
-
-
-    // OVERRIDES/IMPLEMENTS
-    public function display()
-    {
-      if($this->hasCallback())
-        $this->attributes->onchange='components_panel_form_submit(this); return false;';
-
-      parent::display();
-    }
+    // PREDEFINED PROPERTIES
+    const TYPE_PLAIN='button';
+    const TYPE_SUBMIT='submit';
+    const TYPE_RESET='reset';
     //--------------------------------------------------------------------------
 
 
     // IMPLEMENTATION
-    protected $m_options=array();
-    protected $m_noValueOptionName;
-    //-----
-
-
     protected function init()
     {
       parent::init();
 
-      $this->setTemplate(__DIR__.'/combobox.tpl');
+      $this->setTemplate(__DIR__.'/button.tpl');
 
-      $this->attributes->name=$this->getId();
+      $this->attributes->type=self::TYPE_PLAIN;
+      $this->attributes->value=$this->m_title;
     }
     //--------------------------------------------------------------------------
+  }
+
+
+  /**
+   * Panel_Button_Submit
+   *
+   * @package net.evalcode.components
+   * @subpackage ui.panel
+   *
+   * @since 1.0
+   * @access public
+   *
+   * @author Carsten Schipke <carsten.schipke@evalcode.net>
+   * @copyright Copyright (C) 2012 evalcode.net
+   * @license GNU General Public License 3
+   */
+  class Panel_Button_Submit extends Panel_Button
+  {
+    // IMPLEMENTATION
+    protected function init()
+    {
+      parent::init();
+
+      $this->attributes->type=self::TYPE_SUBMIT;
+    }
+    //--------------------------------------------------------------------------
+  }
+
+
+  /**
+   * Panel_Button_Submit_NoScript
+   *
+   * @package net.evalcode.components
+   * @subpackage ui.panel
+   *
+   * @since 1.0
+   * @access public
+   *
+   * @author Carsten Schipke <carsten.schipke@evalcode.net>
+   * @copyright Copyright (C) 2012 evalcode.net
+   * @license GNU General Public License 3
+   */
+  class Panel_Button_Submit_NoScript extends Panel_Button_Submit
+  {
+
   }
 ?>
