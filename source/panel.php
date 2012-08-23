@@ -225,10 +225,10 @@ namespace Components;
       if(null===$this->m_parent)
         $this->initialize();
 
-      if(!$this->attributes->class)
-        $this->attributes->class=strtr(strtolower(get_class($this)), '\\', '_');
-      else
+      if(isset($this->attributes->class) && $this->attributes->class)
         $this->attributes->class.=' '.strtr(strtolower(get_class($this)), '\\', '_');
+      else
+        $this->attributes->class=strtr(strtolower(get_class($this)), '\\', '_');
 
       if(null===$this->m_parent && false===strpos($this->attributes->class, 'components_panel_noscript'))
         $this->attributes->class.=' components_panel_noscript';
