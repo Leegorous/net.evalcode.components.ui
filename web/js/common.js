@@ -12,7 +12,7 @@
     while(node=node.parentNode)
     {
       if(-1<node.tagName.toUpperCase().indexOf("FORM"))
-        node.submit();
+        return node.submit();
     }
   }
 
